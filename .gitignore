@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups
+*.backup_*
+*.BACKUP*
+*.CASSE_*
+*.before_restore_*
+
+# Build
+dist/
+build/
+
+# Scripts PowerShell de maintenance (ne pas versionner)
+*.ps1
+
+# Fichiers d'analyse temporaires
+*-analysis*.txt
+*_ANALYSE*.md
+*_BACKUP_*.tsx
+CLARIFICATIONS_*.md
+COMPARAISON_*.md
+EXPLICATION_*.md
+REPONSES_*.md
+NOTES_POUR_PROMPT_*.md
+logo-analysis.txt
+arborescence.txt
+arbo_scan_*.txt
+
+# Dossier backups
+backups/
+
+# Dossier claude-capture (temporaire)
+claude-capture/
+
+# Build info
+tsconfig.tsbuildinfo

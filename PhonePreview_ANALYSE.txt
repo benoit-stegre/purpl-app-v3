@@ -1,0 +1,312 @@
+'use client'
+
+import { DesignConfigV6 } from '@/types/design-v6'
+import TitreInlineEditor from './TitreInlineEditor'
+
+interface PhonePreviewProps {
+  designConfig: DesignConfigV6
+  onRubriqueClick: (rubrique: string) => void
+}
+
+export default function PhonePreview({ designConfig, onRubriqueClick }: PhonePreviewProps) {
+  const { fond } = designConfig
+
+  const backgroundStyle = fond.type === 'color' 
+    ? { backgroundColor: fond.value }
+    : { backgroundImage: `url(${fond.value})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+
+  return (
+    <div className="relative mx-auto" style={{ width: '395px', height: '832px' }}>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .phone-scrollable::-webkit-scrollbar {
+            width: 6px;
+          }
+          
+          .phone-scrollable::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          
+          .phone-scrollable::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+          }
+          
+          .phone-scrollable::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+          }
+          
+          .phone-scrollable {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+          }
+        `
+      }} />
+
+      {/* Cadre iPhone avec overflow hidden pour contenir la scrollbar */}
+      <div className="absolute inset-0 rounded-[60px] border-[14px] border-gray-900 shadow-2xl overflow-hidden">
+        {/* Notch */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-gray-900 rounded-b-3xl z-10" />
+        
+        {/* Zone scrollable À L'INTÉRIEUR du cadre */}
+        <div 
+          className="phone-scrollable h-full overflow-y-auto"
+          style={backgroundStyle}
+        >
+          <div className="p-6 space-y-4 pt-10">
+            
+            <RubriqueWrapper
+              title="Votre logo"
+              onClick={() => onRubriqueClick('logoHeader')}
+              isEmpty={designConfig.logoHeader.length === 0}
+              showPlusButton={designConfig.logoHeader.length === 1}
+            >
+              {designConfig.logoHeader.length > 0 && (
+                <div className="flex gap-4 items-center justify-center flex-wrap">
+                  {designConfig.logoHeader.map((logo) => (
+                    <div key={logo.id} className="relative">
+                      <img 
+                        src={logo.url}
+                        alt="Logo"
+                        style={{ width: `${logo.width}px`, height: `${logo.height}px` }}
+                        className="object-contain"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Titre"
+              onClick={() => onRubriqueClick('titre')}
+              isEmpty={!designConfig.titre.text}
+            >
+              {designConfig.titre.text && (
+                <div
+                  style={{
+                    fontFamily: designConfig.titre.font,
+                    fontSize: `${designConfig.titre.fontSize}px`,
+                    color: designConfig.titre.color,
+                    ...(designConfig.titre.cadre?.enabled && {
+                      backgroundColor: designConfig.titre.cadre.backgroundColor,
+                      borderRadius: `${designConfig.titre.cadre.borderRadius}px`,
+                      padding: `${designConfig.titre.cadre.padding}px`
+                    })
+                  }}
+                  className="text-center font-bold"
+                >
+                  {designConfig.titre.text}
+                </div>
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Photo"
+              onClick={() => onRubriqueClick('photo')}
+              isEmpty={!designConfig.photo.url}
+            >
+              {designConfig.photo.url && (
+                <img 
+                  src={designConfig.photo.url}
+                  alt="Photo principale"
+                  style={{ 
+                    width: `${designConfig.photo.displayWidth}px`,
+                    height: `${designConfig.photo.displayHeight}px`
+                  }}
+                  className="mx-auto rounded-lg object-cover"
+                />
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Explication courte"
+              onClick={() => onRubriqueClick('explanationCourte')}
+              isEmpty={!designConfig.explanationCourte.text}
+            >
+              {designConfig.explanationCourte.text && (
+                <div
+                  style={{
+                    fontFamily: designConfig.explanationCourte.font,
+                    fontSize: `${designConfig.explanationCourte.fontSize}px`,
+                    color: designConfig.explanationCourte.color,
+                    ...(designConfig.explanationCourte.cadre?.enabled && {
+                      backgroundColor: designConfig.explanationCourte.cadre.backgroundColor,
+                      borderRadius: `${designConfig.explanationCourte.cadre.borderRadius}px`,
+                      padding: `${designConfig.explanationCourte.cadre.padding}px`
+                    })
+                  }}
+                  className="text-center"
+                >
+                  {designConfig.explanationCourte.text}
+                </div>
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Bouton 1"
+              onClick={() => onRubriqueClick('buttons')}
+              isEmpty={!designConfig.buttons.button1Text}
+            >
+              {designConfig.buttons.button1Text && (
+                <button
+                  style={{
+                    fontFamily: designConfig.buttons.font,
+                    fontSize: `${designConfig.buttons.fontSize}px`,
+                    color: designConfig.buttons.textColor,
+                    backgroundColor: designConfig.buttons.backgroundColor,
+                    borderRadius: `${designConfig.buttons.borderRadius}px`,
+                    padding: `${designConfig.buttons.padding}px`,
+                    ...(designConfig.buttons.border?.enabled && {
+                      border: `${designConfig.buttons.border.width}px solid ${designConfig.buttons.border.color}`
+                    })
+                  }}
+                  className="w-full font-medium transition-opacity hover:opacity-90"
+                >
+                  {designConfig.buttons.button1Text}
+                </button>
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Explication longue"
+              onClick={() => onRubriqueClick('explanationLongue')}
+              isEmpty={designConfig.explanationLongue.length === 0}
+              showPlusButton={designConfig.explanationLongue.length > 0}
+            >
+              {designConfig.explanationLongue.length > 0 && (
+                <div className="space-y-3">
+                  {designConfig.explanationLongue
+                    .sort((a, b) => a.order - b.order)
+                    .map((block) => (
+                      <div
+                        key={block.id}
+                        style={{
+                          fontFamily: block.font,
+                          fontSize: `${block.fontSize}px`,
+                          color: block.color,
+                          ...(block.cadre?.enabled && {
+                            backgroundColor: block.cadre.backgroundColor,
+                            borderRadius: `${block.cadre.borderRadius}px`,
+                            padding: `${block.cadre.padding}px`
+                          })
+                        }}
+                      >
+                        {block.text}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Bouton 2"
+              onClick={() => onRubriqueClick('buttons')}
+              isEmpty={!designConfig.buttons.button2Text}
+            >
+              {designConfig.buttons.button2Text && (
+                <button
+                  style={{
+                    fontFamily: designConfig.buttons.font,
+                    fontSize: `${designConfig.buttons.fontSize}px`,
+                    color: designConfig.buttons.textColor,
+                    backgroundColor: designConfig.buttons.backgroundColor,
+                    borderRadius: `${designConfig.buttons.borderRadius}px`,
+                    padding: `${designConfig.buttons.padding}px`,
+                    ...(designConfig.buttons.border?.enabled && {
+                      border: `${designConfig.buttons.border.width}px solid ${designConfig.buttons.border.color}`
+                    })
+                  }}
+                  className="w-full font-medium transition-opacity hover:opacity-90"
+                >
+                  {designConfig.buttons.button2Text}
+                </button>
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Texte obligatoire"
+              onClick={() => onRubriqueClick('texteObligatoire')}
+              isEmpty={!designConfig.texteObligatoire.text}
+            >
+              {designConfig.texteObligatoire.text && (
+                <div
+                  style={{
+                    fontFamily: designConfig.texteObligatoire.font,
+                    fontSize: `${designConfig.texteObligatoire.fontSize}px`,
+                    color: designConfig.texteObligatoire.color
+                  }}
+                  className="text-center text-xs"
+                >
+                  {designConfig.texteObligatoire.text}
+                </div>
+              )}
+            </RubriqueWrapper>
+
+            <RubriqueWrapper
+              title="Logos partenaires"
+              onClick={() => onRubriqueClick('logosPartenaires')}
+              isEmpty={designConfig.logosPartenaires.length === 0}
+              showPlusButton={designConfig.logosPartenaires.length > 0}
+            >
+              {designConfig.logosPartenaires.length > 0 && (
+                <div className="flex gap-4 items-center justify-center flex-wrap">
+                  {designConfig.logosPartenaires
+                    .sort((a, b) => a.order - b.order)
+                    .map((logo) => (
+                      <img 
+                        key={logo.id}
+                        src={logo.url}
+                        alt="Logo partenaire"
+                        style={{ width: `${logo.width}px`, height: `${logo.height}px` }}
+                        className="object-contain"
+                      />
+                    ))}
+                </div>
+              )}
+            </RubriqueWrapper>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface RubriqueWrapperProps {
+  title: string
+  onClick: () => void
+  isEmpty: boolean
+  showPlusButton?: boolean
+  children?: React.ReactNode
+}
+
+function RubriqueWrapper({ title, onClick, isEmpty, showPlusButton, children }: RubriqueWrapperProps) {
+  return (
+    <div 
+      className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[80px] cursor-pointer hover:border-gray-400 transition-colors"
+      onClick={onClick}
+    >
+      {showPlusButton && (
+        <button
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 transition-colors z-10"
+          onClick={(e) => {
+            e.stopPropagation()
+            onClick()
+          }}
+        >
+          <span className="text-sm font-semibold">+</span>
+        </button>
+      )}
+
+      {isEmpty ? (
+        <div className="text-center space-y-1">
+          <div className="text-gray-400 font-medium text-sm">{title}</div>
+          <div className="text-gray-300 text-xs">Cliquez pour ajouter</div>
+        </div>
+      ) : (
+        children
+      )}
+    </div>
+  )
+}
