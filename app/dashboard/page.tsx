@@ -1,36 +1,73 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import Link from 'next/link'
+"use client"
 
-export default async function Dashboard() {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    redirect('/login')
-  }
+import Link from "next/link"
+import { MessageSquare, Megaphone } from "lucide-react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+
+export default function Dashboard() {
+  const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push("/login")
+      }
+    }
+    checkAuth()
+  }, [router, supabase])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-bold text-purple-600">PURPL Dashboard</h1>
-          <div className="text-sm text-black truncate max-w-full">{user.email}</div>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#EDEAE3" }}>
+      <main className="flex-1 flex items-center justify-center p-8">
+        <div className="flex gap-8">
+          {/* Carte Concertations */}
+          <Link href="/dashboard/concertations">
+            <div
+              className="w-72 h-80 rounded-2xl flex flex-col items-center justify-center gap-6 cursor-pointer transition-all hover:shadow-xl hover:scale-105"
+              style={{ backgroundColor: "#FFFEF5", border: "2px solid #EDEAE3" }}
+            >
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#ED693A" }}
+              >
+                <MessageSquare size={40} className="text-white" />
+              </div>
+              <div className="text-center">
+                <h2 className="text-xl font-bold" style={{ color: "#2F2F2E" }}>
+                  Concertations
+                </h2>
+                <p className="text-sm mt-2 px-4" style={{ color: "#76715A" }}>
+                  Créer et gérer vos consultations citoyennes
+                </p>
+              </div>
+            </div>
+          </Link>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-black">Bienvenue !</h2>
-          <p className="text-black mb-6 text-sm sm:text-base">
-            Créez votre première concertation citoyenne.
-          </p>
-          <Link
-            href="/dashboard/concertations"
-            className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 text-sm sm:text-base"
-          >
-            Voir mes concertations
+          {/* Carte Communications */}
+          <Link href="/dashboard/communications">
+            <div
+              className="w-72 h-80 rounded-2xl flex flex-col items-center justify-center gap-6 cursor-pointer transition-all hover:shadow-xl hover:scale-105"
+              style={{ backgroundColor: "#FFFEF5", border: "2px solid #EDEAE3" }}
+            >
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#76715A" }}
+              >
+                <Megaphone size={40} className="text-white" />
+              </div>
+              <div className="text-center">
+                <h2 className="text-xl font-bold" style={{ color: "#2F2F2E" }}>
+                  Communications
+                </h2>
+                <p className="text-sm mt-2 px-4" style={{ color: "#76715A" }}>
+                  Diffuser vos messages et actualités
+                </p>
+              </div>
+            </div>
           </Link>
         </div>
       </main>
