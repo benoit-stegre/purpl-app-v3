@@ -1,10 +1,31 @@
-﻿'use client'
+'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, X, Trash2 } from 'lucide-react'
 
+// COULEURS V0 EXACTES
+const V0_COLORS = {
+  accent: '#76715A',        // Olive PURPL - toggles, bordures sélection
+  border: '#EDEAE3',        // Bordures éléments
+  separator: '#D6CCAF',     // Séparateurs entre boutons
+  label: '#76715A',         // Textes labels
+  value: '#2F2F2E',         // Textes valeurs (hex, px)
+  hoverBg: '#EDEAE3',       // Fond hover
+  white: '#FFFFFF',
+}
+
+// Liste des polices disponibles
+const FONTS = [
+  { name: "DM Sans", value: "DM Sans" },
+  { name: "Albert Sans", value: "Albert Sans" },
+  { name: "Arial", value: "Arial" },
+  { name: "Georgia", value: "Georgia" },
+  { name: "Times New Roman", value: "Times New Roman" },
+]
+
 interface SidePanelProps {
-  type: 'color' | 'alignment' | 'cadre' | 'upload' | 'logo-alignment'
+  type: 'color' | 'alignment' | 'cadre' | 'upload' | 'logo-alignment' | 'font'
   position?: { top: number; left: number }
   color?: string
   textAlign?: 'left' | 'center' | 'right' | 'justify'
@@ -13,6 +34,7 @@ interface SidePanelProps {
     enabled: boolean
     backgroundColor: string
     borderRadius: number
+    borderRadiusEnabled?: boolean
     padding?: number
     border?: {
       enabled: boolean
@@ -25,6 +47,7 @@ interface SidePanelProps {
       offsetY: number
       color: string
     }
+    syncWithGlobal?: boolean
   }
   // Props pour upload
   currentImageUrl?: string
@@ -36,12 +59,17 @@ interface SidePanelProps {
   logoAlignment?: 'left' | 'center' | 'right'
   onLogoAlignChange?: (alignment: 'left' | 'center' | 'right') => void
   isLogoMode?: boolean
+  // Props pour font
+  font?: string
+  fontSize?: number
+  onFontChange?: (font: string) => void
+  onSizeChange?: (size: number) => void
   
   onColorChange?: (color: string) => void
   onAlignChange?: (align: 'left' | 'center' | 'right' | 'justify') => void
   onCadreToggle?: () => void
   onCadreChange?: (cadre: any) => void
-  onToggleSyncWithGlobal?: () => void  // ✅ Nouveau : toggle synchronisation avec réglages globaux
+  onToggleSyncWithGlobal?: () => void
   onClose: () => void
 }
 
@@ -61,6 +89,10 @@ export default function SidePanel({
   logoAlignment,
   onLogoAlignChange,
   isLogoMode = false,
+  font,
+  fontSize,
+  onFontChange,
+  onSizeChange,
   onColorChange,
   onAlignChange,
   onCadreToggle,
@@ -68,8 +100,15 @@ export default function SidePanel({
   onToggleSyncWithGlobal,
   onClose
 }: SidePanelProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Séparateur V0
   const Separator = () => (
-    <div className="h-px w-full bg-gray-400 my-3" />
+    <div className="h-px w-full bg-[#EDEAE3] my-3" />
   )
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,45 +133,45 @@ export default function SidePanel({
 
     return (
       <div className="space-y-3">
-        <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+        <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">
           Alignement du logo
-        </div>
+        </p>
 
         <div className="grid grid-cols-3 gap-2">
           {alignments.map((align) => (
             <button
               key={align.value}
               onClick={() => onLogoAlignChange?.(align.value)}
-              className={
-                'p-4 rounded flex flex-col items-center justify-center border-2 hover:bg-gray-50 transition-colors ' +
-                (logoAlignment === align.value 
-                  ? 'bg-blue-50 border-blue-500' 
-                  : 'border-gray-300')
-              }
+              className={`p-4 rounded-lg flex flex-col items-center justify-center border-2 hover:bg-[#EDEAE3] transition-colors ${
+                logoAlignment === align.value 
+                  ? 'bg-[#EDEAE3] border-[#76715A]' 
+                  : 'border-[#EDEAE3]'
+              }`}
               title={align.label}
             >
-              <div className="text-2xl mb-2 text-gray-700">{align.icon}</div>
-              <span className="text-xs text-gray-600">{align.label}</span>
+              <div className="text-2xl mb-2 text-[#76715A]">{align.icon}</div>
+              <span className="text-xs text-[#76715A]">{align.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="text-xs text-gray-500 bg-gray-50 rounded p-3">
+        <div className="text-xs text-[#76715A] bg-[#EDEAE3]/30 rounded-lg p-3">
           Alignement horizontal du logo dans l'espace disponible.
         </div>
       </div>
     )
   }
-const renderUploadPanel = () => (
+
+  const renderUploadPanel = () => (
     <div className="space-y-3">
-      <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Modifier le logo</div>
+      <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Modifier le logo</p>
 
       {currentImageUrl ? (
         <div className="relative">
           <img 
             src={currentImageUrl} 
             alt="Logo actuel" 
-            className="w-full h-48 object-contain bg-gray-50 rounded-lg border-2 border-gray-300"
+            className="w-full h-48 object-contain bg-[#EDEAE3]/30 rounded-lg border border-[#EDEAE3]"
           />
           <button
             onClick={onImageRemove}
@@ -143,11 +182,11 @@ const renderUploadPanel = () => (
           </button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-colors">
+        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-[#EDEAE3] rounded-lg cursor-pointer hover:bg-[#EDEAE3]/30 hover:border-[#76715A] transition-colors">
           <div className="flex flex-col items-center">
-            <Upload className="w-10 h-10 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-600 font-medium">Cliquer pour uploader</p>
-            <p className="text-xs text-gray-400 mt-1">
+            <Upload className="w-10 h-10 text-[#76715A] mb-2" />
+            <p className="text-sm text-[#76715A] font-medium">Cliquer pour uploader</p>
+            <p className="text-xs text-[#76715A]/60 mt-1">
               Max {(maxSize / (1024 * 1024)).toFixed(1)} MB
             </p>
           </div>
@@ -161,12 +200,12 @@ const renderUploadPanel = () => (
       )}
 
       {uploadError && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
           {uploadError}
         </div>
       )}
 
-      <div className="text-xs text-gray-500 bg-gray-50 rounded p-3 space-y-1">
+      <div className="text-xs text-[#76715A] bg-[#EDEAE3]/30 rounded-lg p-3 space-y-1">
         <div><strong>Formats acceptés :</strong> JPG, PNG, SVG, WebP</div>
         <div><strong>Taille max :</strong> {(maxSize / (1024 * 1024)).toFixed(1)} MB</div>
         <div><strong>Dimensions max :</strong> 2000 x 2000 px</div>
@@ -175,10 +214,10 @@ const renderUploadPanel = () => (
       {currentImageUrl && (
         <>
           <Separator />
-          <label className="flex items-center justify-center w-full py-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-colors">
+          <label className="flex items-center justify-center w-full py-3 border border-[#EDEAE3] rounded-lg cursor-pointer hover:bg-[#EDEAE3]/30 hover:border-[#76715A] transition-colors">
             <div className="flex items-center gap-2">
-              <Upload className="w-5 h-5 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">Remplacer le logo</span>
+              <Upload className="w-5 h-5 text-[#76715A]" />
+              <span className="text-sm font-medium text-[#76715A]">Remplacer le logo</span>
             </div>
             <input
               type="file"
@@ -192,17 +231,19 @@ const renderUploadPanel = () => (
     </div>
   )
 
+  // Panel Color fusionné avec Cadre (V0 style)
   const renderColorPanel = () => (
     <div className="space-y-3">
-      <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Couleur du texte</div>
+      {/* COULEUR DU TEXTE */}
+      <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Couleur du texte</p>
       
       {projectColors.length > 0 && (
-        <div className="grid grid-cols-6 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           {projectColors.map((c) => (
             <button
               key={c}
               onClick={() => onColorChange?.(c)}
-              className={'w-8 h-8 rounded border-2 hover:scale-110 transition-transform ' + (c === color ? 'border-blue-500' : 'border-gray-300')}
+              className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${c === color ? 'border-[#76715A]' : 'border-[#EDEAE3]'}`}
               style={{ backgroundColor: c }}
               title={c}
             />
@@ -213,55 +254,285 @@ const renderUploadPanel = () => (
       <div className="flex items-center gap-2">
         <input
           type="color"
-          value={color}
+          value={color || '#000000'}
           onChange={(e) => onColorChange?.(e.target.value)}
-          className="w-10 h-10 rounded cursor-pointer border-2 border-gray-400"
+          className="w-8 h-8 rounded cursor-pointer border border-[#EDEAE3]"
         />
-        <span className="text-sm font-mono text-gray-600">{color}</span>
+        <span className="text-xs font-mono text-[#76715A]">{color}</span>
       </div>
+
+      <Separator />
+
+      {/* FOND - Toggle */}
+      <button 
+        onClick={onCadreToggle}
+        className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
+      >
+        <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre?.enabled ? 'bg-[#76715A]' : 'bg-white'}`} />
+        <span className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Fond</span>
+      </button>
+
+      {cadre?.enabled && (
+        <div className="pl-5 space-y-2">
+          <div className="grid grid-cols-5 gap-2">
+            {projectColors.map((c) => (
+              <button
+                key={c}
+                onClick={() => onCadreChange?.({ ...cadre, backgroundColor: c })}
+                className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${c === cadre.backgroundColor ? 'border-[#76715A]' : 'border-[#EDEAE3]'}`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={cadre.backgroundColor}
+              onChange={(e) => onCadreChange?.({ ...cadre, backgroundColor: e.target.value })}
+              className="w-8 h-8 rounded cursor-pointer border border-[#EDEAE3]"
+            />
+            <span className="text-xs font-mono text-[#76715A]">{cadre.backgroundColor}</span>
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* BORDURE - Toggle */}
+      <button
+        onClick={() => onCadreChange?.({ 
+          ...cadre!, 
+          border: { 
+            ...(cadre!.border || { color: '#2F2F2E', width: 2 }), 
+            enabled: !cadre!.border?.enabled 
+          } 
+        })}
+        className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
+      >
+        <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre?.border?.enabled ? 'bg-[#76715A]' : 'bg-white'}`} />
+        <span className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Bordure</span>
+      </button>
+
+      {cadre?.border?.enabled && (
+        <div className="pl-5 space-y-3">
+          <div className="grid grid-cols-5 gap-2">
+            {projectColors.map((c) => (
+              <button
+                key={c}
+                onClick={() => onCadreChange?.({ ...cadre, border: { ...cadre.border!, color: c } })}
+                className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${c === cadre.border?.color ? 'border-[#76715A]' : 'border-[#EDEAE3]'}`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#76715A]">Épaisseur</span>
+              <span className="text-xs font-mono text-[#2F2F2E]">{cadre.border?.width || 2}px</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={cadre.border?.width || 2}
+              onChange={(e) => onCadreChange?.({ ...cadre, border: { ...cadre.border!, width: parseInt(e.target.value) } })}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: '#76715A' }}
+            />
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* ARRONDI - Toggle */}
+      <button
+        onClick={() => onCadreChange?.({ 
+          ...cadre!, 
+          borderRadiusEnabled: !cadre!.borderRadiusEnabled,
+          borderRadius: cadre!.borderRadiusEnabled ? 0 : (cadre!.borderRadius || 8)
+        })}
+        className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
+      >
+        <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre?.borderRadiusEnabled ? 'bg-[#76715A]' : 'bg-white'}`} />
+        <span className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Arrondi</span>
+      </button>
+
+      {cadre?.borderRadiusEnabled && (
+        <div className="pl-5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-[#76715A]">Rayon</span>
+            <span className="text-xs font-mono text-[#2F2F2E]">{cadre.borderRadius}px</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="30"
+            value={cadre.borderRadius}
+            onChange={(e) => onCadreChange?.({ ...cadre, borderRadius: parseInt(e.target.value) })}
+            className="w-full h-2 rounded-full appearance-none cursor-pointer"
+            style={{ accentColor: '#76715A' }}
+          />
+        </div>
+      )}
+
+      <Separator />
+
+      {/* OMBRE - Toggle */}
+      <button
+        onClick={() => onCadreChange?.({ 
+          ...cadre!, 
+          shadow: { 
+            ...(cadre!.shadow || { blur: 8, offsetY: 4, color: 'rgba(0,0,0,0.15)' }), 
+            enabled: !cadre!.shadow?.enabled 
+          } 
+        })}
+        className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
+      >
+        <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre?.shadow?.enabled ? 'bg-[#76715A]' : 'bg-white'}`} />
+        <span className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Ombre</span>
+      </button>
+
+      {cadre?.shadow?.enabled && (
+        <div className="pl-5 space-y-3">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#76715A]">Flou</span>
+              <span className="text-xs font-mono text-[#2F2F2E]">{cadre.shadow.blur}px</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="20"
+              value={cadre.shadow.blur}
+              onChange={(e) => onCadreChange?.({ ...cadre, shadow: { ...cadre.shadow!, blur: parseInt(e.target.value) } })}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: '#76715A' }}
+            />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#76715A]">Décalage Y</span>
+              <span className="text-xs font-mono text-[#2F2F2E]">{cadre.shadow.offsetY}px</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              value={cadre.shadow.offsetY}
+              onChange={(e) => onCadreChange?.({ ...cadre, shadow: { ...cadre.shadow!, offsetY: parseInt(e.target.value) } })}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: '#76715A' }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 
   const renderAlignmentPanel = () => (
     <div className="space-y-3">
-      <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Alignement</div>
+      <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Alignement</p>
       
-      <div className="grid grid-cols-2 gap-2">
+      {/* Container inline avec séparateurs V0 */}
+      <div className="flex rounded-lg border border-[#D6CCAF] overflow-hidden">
         <button
           onClick={() => onAlignChange?.('left')}
-          className={'p-3 rounded hover:bg-gray-50 flex items-center justify-center border-2 ' + (textAlign === 'left' ? 'bg-blue-100 border-blue-500' : 'border-gray-400')}
+          className={`flex-1 py-2 flex items-center justify-center transition-colors ${textAlign === 'left' ? 'bg-[#EDEAE3]' : 'hover:bg-[#EDEAE3]'}`}
         >
-          <AlignLeft className="w-5 h-5 text-gray-700" />
+          <AlignLeft className="w-4 h-4 text-[#76715A]" />
         </button>
-        
+        <div className="w-px bg-[#D6CCAF]" />
         <button
           onClick={() => onAlignChange?.('center')}
-          className={'p-3 rounded hover:bg-gray-50 flex items-center justify-center border-2 ' + (textAlign === 'center' ? 'bg-blue-100 border-blue-500' : 'border-gray-400')}
+          className={`flex-1 py-2 flex items-center justify-center transition-colors ${textAlign === 'center' ? 'bg-[#EDEAE3]' : 'hover:bg-[#EDEAE3]'}`}
         >
-          <AlignCenter className="w-5 h-5 text-gray-700" />
+          <AlignCenter className="w-4 h-4 text-[#76715A]" />
         </button>
-        
+        <div className="w-px bg-[#D6CCAF]" />
         <button
           onClick={() => onAlignChange?.('right')}
-          className={'p-3 rounded hover:bg-gray-50 flex items-center justify-center border-2 ' + (textAlign === 'right' ? 'bg-blue-100 border-blue-500' : 'border-gray-400')}
+          className={`flex-1 py-2 flex items-center justify-center transition-colors ${textAlign === 'right' ? 'bg-[#EDEAE3]' : 'hover:bg-[#EDEAE3]'}`}
         >
-          <AlignRight className="w-5 h-5 text-gray-700" />
+          <AlignRight className="w-4 h-4 text-[#76715A]" />
         </button>
-        
+        <div className="w-px bg-[#D6CCAF]" />
         <button
           onClick={() => onAlignChange?.('justify')}
-          className={'p-3 rounded hover:bg-gray-50 flex items-center justify-center border-2 ' + (textAlign === 'justify' ? 'bg-blue-100 border-blue-500' : 'border-gray-400')}
+          className={`flex-1 py-2 flex items-center justify-center transition-colors ${textAlign === 'justify' ? 'bg-[#EDEAE3]' : 'hover:bg-[#EDEAE3]'}`}
         >
-          <AlignJustify className="w-5 h-5 text-gray-700" />
+          <AlignJustify className="w-4 h-4 text-[#76715A]" />
         </button>
       </div>
     </div>
   )
 
+  const renderFontPanel = () => {
+    const currentSize = fontSize || 16
+    const minSize = 12
+    const maxSize = 48
+
+    return (
+      <div className="space-y-4">
+        {/* SECTION POLICE */}
+        <div>
+          <p className="text-xs text-[#76715A] mb-2 uppercase tracking-wide font-medium">Police</p>
+          <div className="space-y-1">
+            {FONTS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => onFontChange?.(f.value)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border transition-colors ${font === f.value ? 'border-[#76715A] bg-[#EDEAE3]/30' : 'border-[#EDEAE3] hover:border-[#76715A] hover:bg-[#EDEAE3]/30'}`}
+              >
+                <span style={{ fontFamily: f.value }} className="text-sm text-[#2F2F2E]">
+                  {f.name}
+                </span>
+                <span style={{ fontFamily: f.value }} className="text-xs text-[#76715A]">
+                  Aa
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* SECTION TAILLE */}
+        <div>
+          <p className="text-xs text-[#76715A] mb-2 uppercase tracking-wide font-medium">Taille</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onSizeChange?.(Math.max(minSize, currentSize - 2))}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#EDEAE3] hover:bg-[#EDEAE3] transition-colors text-[#2F2F2E]"
+            >
+              −
+            </button>
+            <input
+              type="range"
+              min={minSize}
+              max={maxSize}
+              value={currentSize}
+              onChange={(e) => onSizeChange?.(parseInt(e.target.value))}
+              className="flex-1 h-2 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: '#76715A' }}
+            />
+            <button
+              onClick={() => onSizeChange?.(Math.min(maxSize, currentSize + 2))}
+              className="w-8 h-8 flex items-center justify-center rounded-lg border border-[#EDEAE3] hover:bg-[#EDEAE3] transition-colors text-[#2F2F2E]"
+            >
+              +
+            </button>
+          </div>
+          <div className="text-center mt-1">
+            <span className="text-xs font-mono text-[#2F2F2E]">{currentSize}px</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const renderCadrePanel = () => {
     if (!cadre) return null
-    
-    const showSharedParams = cadre.enabled || cadre.border?.enabled || cadre.borderRadiusEnabled
 
     return (
       <div className="space-y-3">
@@ -275,7 +546,7 @@ const renderUploadPanel = () => (
                 setTimeout(() => { (window as any).__sp_del_guard = false }, 400)
                 onImageRemove()
               }}
-              className="p-2 rounded hover:bg-red-50 transition-colors"
+              className="p-2 rounded-lg hover:bg-red-50 transition-colors"
               title="Supprimer l'image"
               aria-label="Supprimer l'image"
             >
@@ -289,18 +560,18 @@ const renderUploadPanel = () => (
               onClick={onCadreToggle}
               className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
             >
-              <div className={'w-2.5 h-2.5 rounded-full border-2 border-blue-500 transition-colors ' + (cadre?.enabled ? 'bg-blue-500' : 'bg-white')} />
-              <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Fond</div>
+              <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre?.enabled ? 'bg-[#76715A]' : 'bg-white'}`} />
+              <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Fond</p>
             </button>
 
             {cadre?.enabled && (
           <>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               {projectColors.map((c) => (
                 <button
                   key={c}
                   onClick={() => onCadreChange?.({ ...cadre, backgroundColor: c })}
-                  className={'w-8 h-8 rounded border-2 hover:scale-110 transition-transform ' + (c === cadre.backgroundColor ? 'border-blue-500' : 'border-gray-300')}
+                  className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${c === cadre.backgroundColor ? 'border-[#76715A]' : 'border-[#EDEAE3]'}`}
                   style={{ backgroundColor: c }}
                 />
               ))}
@@ -311,9 +582,9 @@ const renderUploadPanel = () => (
                 type="color"
                 value={cadre.backgroundColor}
                 onChange={(e) => onCadreChange?.({ ...cadre, backgroundColor: e.target.value })}
-                className="w-10 h-10 rounded cursor-pointer border-2 border-gray-400"
+                className="w-8 h-8 rounded cursor-pointer border border-[#EDEAE3]"
               />
-              <span className="text-sm font-mono text-gray-600">{cadre.backgroundColor}</span>
+              <span className="text-xs font-mono text-[#76715A]">{cadre.backgroundColor}</span>
             </div>
           </>
             )}
@@ -335,8 +606,8 @@ const renderUploadPanel = () => (
           })}
           className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
         >
-          <div className={'w-2.5 h-2.5 rounded-full border-2 border-blue-500 transition-colors ' + (cadre.border?.enabled ? 'bg-blue-500' : 'bg-white')} />
-          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Bordure</div>
+          <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre.border?.enabled ? 'bg-[#76715A]' : 'bg-white'}`} />
+          <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Bordure</p>
         </button>
 
         {/* Réglages Bordure - affichés seulement si bordure activée */}
@@ -345,7 +616,7 @@ const renderUploadPanel = () => (
           
           return (
             <>
-              <div className="grid grid-cols-6 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 {projectColors.map((c) => (
                   <button
                     key={c}
@@ -353,7 +624,7 @@ const renderUploadPanel = () => (
                       ...cadre, 
                       border: { ...border, color: c } 
                     })}
-                    className={'w-8 h-8 rounded border-2 hover:scale-110 transition-transform ' + (c === border.color ? 'border-blue-500' : 'border-gray-300')}
+                    className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${c === border.color ? 'border-[#76715A]' : 'border-[#EDEAE3]'}`}
                     style={{ backgroundColor: c }}
                   />
                 ))}
@@ -367,15 +638,15 @@ const renderUploadPanel = () => (
                     ...cadre, 
                     border: { ...border, color: e.target.value } 
                   })}
-                  className="w-10 h-10 rounded cursor-pointer border-2 border-gray-400"
+                  className="w-8 h-8 rounded cursor-pointer border border-[#EDEAE3]"
                 />
-                <span className="text-sm font-mono text-gray-600">{border.color}</span>
+                <span className="text-xs font-mono text-[#76715A]">{border.color}</span>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Épaisseur</span>
-                  <span className="text-xs font-mono text-gray-700">{border.width}px</span>
+                  <span className="text-xs text-[#76715A]">Épaisseur</span>
+                  <span className="text-xs font-mono text-[#2F2F2E]">{border.width}px</span>
                 </div>
                 <input
                   type="range"
@@ -386,8 +657,8 @@ const renderUploadPanel = () => (
                     ...cadre, 
                     border: { ...border, width: parseInt(e.target.value) } 
                   })}
-                  className="w-full"
-                  style={{ accentColor: '#3B82F6' }}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                  style={{ accentColor: '#76715A' }}
                 />
               </div>
             </>
@@ -400,7 +671,7 @@ const renderUploadPanel = () => (
             <Separator />
             
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Ombre</label>
+              <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Ombre</p>
               <button
                 onClick={() => onCadreChange?.({
                   shadow: {
@@ -409,8 +680,8 @@ const renderUploadPanel = () => (
                   }
                 })}
                 className={cadre.shadow?.enabled
-                  ? 'px-3 py-1 rounded text-xs font-medium transition-colors bg-blue-500 text-white'
-                  : 'px-3 py-1 rounded text-xs font-medium transition-colors bg-gray-200 text-gray-700'}
+                  ? 'px-3 py-1 rounded-lg text-xs font-medium transition-colors bg-[#76715A] text-white'
+                  : 'px-3 py-1 rounded-lg text-xs font-medium transition-colors bg-[#EDEAE3] text-[#76715A]'}
               >
                 {cadre.shadow?.enabled ? 'ON' : 'OFF'}
               </button>
@@ -420,8 +691,8 @@ const renderUploadPanel = () => (
               <>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">Flou</span>
-                    <span className="text-xs font-mono text-gray-700">{cadre.shadow.blur}px</span>
+                    <span className="text-xs text-[#76715A]">Flou</span>
+                    <span className="text-xs font-mono text-[#2F2F2E]">{cadre.shadow.blur}px</span>
                   </div>
                   <input
                     type="range"
@@ -434,15 +705,15 @@ const renderUploadPanel = () => (
                         blur: Number(e.target.value)
                       }
                     })}
-                    className="w-full"
-                    style={{ accentColor: '#3B82F6' }}
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                    style={{ accentColor: '#76715A' }}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600">Décalage Y</span>
-                    <span className="text-xs font-mono text-gray-700">{cadre.shadow.offsetY}px</span>
+                    <span className="text-xs text-[#76715A]">Décalage Y</span>
+                    <span className="text-xs font-mono text-[#2F2F2E]">{cadre.shadow.offsetY}px</span>
                   </div>
                   <input
                     type="range"
@@ -455,14 +726,14 @@ const renderUploadPanel = () => (
                         offsetY: Number(e.target.value)
                       }
                     })}
-                    className="w-full"
-                    style={{ accentColor: '#3B82F6' }}
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                    style={{ accentColor: '#76715A' }}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs text-gray-600 block">Couleur</label>
-                  <div className="grid grid-cols-6 gap-2">
+                  <label className="text-xs text-[#76715A] block">Couleur</label>
+                  <div className="grid grid-cols-5 gap-2">
                     {projectColors.map((c) => {
                       // Extraire la couleur hex de l'ombre actuelle pour comparaison
                       const currentShadowColor = cadre.shadow?.color || 'rgba(0, 0, 0, 0.15)'
@@ -489,7 +760,7 @@ const renderUploadPanel = () => (
                               }
                             })
                           }}
-                          className={'w-8 h-8 rounded border-2 hover:scale-110 transition-transform ' + (isSelected ? 'border-blue-500' : 'border-gray-300')}
+                          className={`w-8 h-8 rounded-full border-2 hover:scale-110 transition-transform ${isSelected ? 'border-[#76715A]' : 'border-[#EDEAE3]'}`}
                           style={{ backgroundColor: c }}
                         />
                       )
@@ -524,7 +795,7 @@ const renderUploadPanel = () => (
                           }
                         })
                       }}
-                      className="w-10 h-10 rounded cursor-pointer border-2 border-gray-400"
+                      className="w-8 h-8 rounded cursor-pointer border border-[#EDEAE3]"
                     />
                     <input
                       type="range"
@@ -558,10 +829,10 @@ const renderUploadPanel = () => (
                           })
                         }
                       }}
-                      className="flex-1"
-                      style={{ accentColor: '#3B82F6' }}
+                      className="flex-1 h-2 rounded-full appearance-none cursor-pointer"
+                      style={{ accentColor: '#76715A' }}
                     />
-                    <span className="text-xs font-mono text-gray-600 w-12 text-right">
+                    <span className="text-xs font-mono text-[#76715A] w-12 text-right">
                       {(() => {
                         const currentColor = cadre.shadow?.color || 'rgba(0, 0, 0, 0.15)'
                         // Extraire l'alpha de rgba(r, g, b, alpha) - chercher le dernier paramètre après la 3ème virgule
@@ -591,16 +862,16 @@ const renderUploadPanel = () => (
           })}
           className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
         >
-          <div className={'w-2.5 h-2.5 rounded-full border-2 border-blue-500 transition-colors ' + (cadre.borderRadiusEnabled ? 'bg-blue-500' : 'bg-white')} />
-          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Arrondi</div>
+          <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre.borderRadiusEnabled ? 'bg-[#76715A]' : 'bg-white'}`} />
+          <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Arrondi</p>
         </button>
 
         {/* Réglages Arrondi - affichés seulement si arrondi activé */}
         {cadre.borderRadiusEnabled && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-600">Arrondi</span>
-              <span className="text-xs font-mono text-gray-700">{cadre!.borderRadius}px</span>
+              <span className="text-xs text-[#76715A]">Arrondi</span>
+              <span className="text-xs font-mono text-[#2F2F2E]">{cadre!.borderRadius}px</span>
             </div>
             <input
               type="range"
@@ -608,8 +879,8 @@ const renderUploadPanel = () => (
               max="30"
               value={cadre!.borderRadius}
               onChange={(e) => onCadreChange?.({ ...cadre!, borderRadius: parseInt(e.target.value) })}
-              className="w-full"
-              style={{ accentColor: '#3B82F6' }}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{ accentColor: '#76715A' }}
             />
           </div>
         )}
@@ -621,12 +892,12 @@ const renderUploadPanel = () => (
           onClick={() => onToggleSyncWithGlobal?.()}
           className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
         >
-          <div className={'w-2.5 h-2.5 rounded-full border-2 border-blue-500 transition-colors ' + (cadre?.syncWithGlobal !== false ? 'bg-blue-500' : 'bg-white')} />
-          <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Synchroniser avec les autres images</div>
+          <div className={`w-3 h-3 rounded-full border-2 border-[#76715A] transition-colors ${cadre?.syncWithGlobal !== false ? 'bg-[#76715A]' : 'bg-white'}`} />
+          <p className="text-xs text-[#76715A] uppercase tracking-wide font-medium">Synchroniser avec les autres images</p>
         </button>
         
         {cadre?.syncWithGlobal !== false && (
-          <div className="text-xs text-gray-500 bg-gray-50 rounded p-2">
+          <div className="text-xs text-[#76715A] bg-[#EDEAE3]/30 rounded-lg p-2">
             Cette image suit les réglages globaux. Décochez pour la rendre indépendante.
           </div>
         )}
@@ -635,25 +906,32 @@ const renderUploadPanel = () => (
   }
 
   if (!position) return null
+  if (!mounted) return null
 
   // Hauteur approximative du FloatingToolbar (py-2 = 8px top + 8px bottom + h-8 = 32px pour les éléments = ~48px)
   const FLOATING_TOOLBAR_HEIGHT = 48
 
-  return (
+  const panelContent = (
     <div
+      data-side-panel="true"
       style={{
         position: 'fixed',
         top: (position.top + FLOATING_TOOLBAR_HEIGHT + 10) + 'px', // 10px en dessous du FloatingToolbar
         left: position.left + 'px', // Aligné à gauche avec le FloatingToolbar
         zIndex: 10000
       }}
-      className="w-80 bg-white border-2 border-gray-400 rounded-lg shadow-xl p-4"
+      className="w-80 bg-white border border-[#D6CCAF] rounded-xl shadow-lg p-4"
     >
       {type === 'upload' && renderUploadPanel()}
       {type === 'color' && renderColorPanel()}
       {type === 'alignment' && renderAlignmentPanel()}
       {type === 'cadre' && renderCadrePanel()}
       {type === 'logo-alignment' && renderLogoAlignmentPanel()}
+      {type === 'font' && renderFontPanel()}
     </div>
   )
+
+  // Utiliser un portail pour rendre le SidePanel directement dans le body
+  // Cela évite les problèmes d'overflow-hidden ou transform sur les parents
+  return createPortal(panelContent, document.body)
 }

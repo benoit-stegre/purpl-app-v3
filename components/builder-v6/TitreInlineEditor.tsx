@@ -237,13 +237,16 @@ export default function TitreInlineEditor({
       if (!isActive) return
 
       const target = event.target as Node
-      const clickedInContainer = containerRef.current?.contains(target)
-      const clickedInToolbar = toolbarRef.current?.contains(target)
-      const clickedInSidePanel = sidePanelRef.current?.contains(target)
-
-      if (clickedInContainer || clickedInToolbar || clickedInSidePanel) {
-        return
-      }
+      const targetElement = target as Element
+      
+      // Exclure les clics dans le container
+      if (containerRef.current?.contains(target)) return
+      
+      // Exclure les clics dans le FloatingToolbar (via data-attribute)
+      if (targetElement.closest?.('[data-floating-toolbar]')) return
+      
+      // Exclure les clics dans le SidePanel (via data-attribute)
+      if (targetElement.closest?.('[data-side-panel]')) return
 
       if (sidePanelOpen) {
         setSidePanelOpen(false)
@@ -254,7 +257,7 @@ export default function TitreInlineEditor({
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isActive, sidePanelOpen])
+  }, [isActive, sidePanelOpen, deactivateRubrique, setSidePanelOpen])
 
   return (
     <div 

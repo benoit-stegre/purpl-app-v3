@@ -64,6 +64,7 @@ export default function FloatingToolbar({
 
   const toolbarContent = (
     <div
+      data-floating-toolbar="true"
       style={{
         position: 'fixed',
         top: position.top + 'px',
